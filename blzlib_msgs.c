@@ -346,11 +346,34 @@ int msg_parse_interface(sd_bus_message* m, enum msg_act act, const char* opath,
 			return r;
 		}
 
+		int data_leng = sizeof(ble_dev_info);
+		int uuid_count = 0;
+		for (int i = 0;
+			 dev.service_uuids != NULL && dev.service_uuids[i] != NULL; i++) {
+			uuid_count++;
+		}
+		data_leng += UUID_STR_LEN * uuid_count;
+		ble_dev_info *dinfo = (ble_dev_info *) malloc(data_leng);
+		memset(dinfo, 0, data_leng);
+		memcpy(dinfo->name, dev.name, 19);
+		memcpy(dinfo->mac, dev.mac, 6);
+		dinfo->uuid_count = uuid_count;
+		for (int i = 0;
+			 dev.service_uuids != NULL && dev.service_uuids[i] != NULL; i++) {
+
+			strcpy(dinfo->serv_uuids + i * UUID_STR_LEN, dev.service_uuids[i]);
+		}
+
 		/* callback */
 		blz_ctx* ctx = user;
 		if (ctx != NULL && ctx->scan_cb != NULL) {
-			ctx->scan_cb(dev.mac, BLZ_ADDR_UNKNOWN, dev.rssi, NULL, 0, ctx->scan_user);
+			if (dinfo != NULL)
+				ctx->scan_cb(dev.mac, BLZ_ADDR_UNKNOWN, dev.rssi, (uint8_t *) dinfo, data_leng, ctx->scan_user);
+			else
+				ctx->scan_cb(dev.mac, BLZ_ADDR_UNKNOWN, dev.rssi, NULL, 0, ctx->scan_user);
 		}
+
+		free(dinfo);
 
 		/* free uuids of temporary device */
 		for (int i = 0;

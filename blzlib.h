@@ -16,6 +16,13 @@
 extern "C" {
 #endif
 
+typedef struct ble_dev_info {
+	char name[20];
+	char mac[6];
+	int uuid_count;
+	char serv_uuids[1];
+} ble_dev_info;
+
 enum blz_addr_type { BLZ_ADDR_UNKNOWN, BLZ_ADDR_PUBLIC, BLZ_ADDR_RANDOM };
 
 typedef struct blz_context blz_ctx;
